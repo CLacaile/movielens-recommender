@@ -1,6 +1,5 @@
 import numpy
 
-from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.recommendation import ALS
@@ -12,8 +11,8 @@ def parseInput(line):
 
 
 if __name__ == "__main__":
+	# Build new session or retrieve existing one
 	spark = SparkSession.builder.appName("movielens-recommender-2").getOrCreate()
-	
 	
 	ml_small_path = "data/ml-latest-small/ratings.csv"
 	ml_path = "data/ml-latest/ratings.csv"
@@ -25,7 +24,8 @@ if __name__ == "__main__":
 	ratingsRDD = data_filtered.map(parseInput)
 	ratings = spark.createDataFrame(ratingsRDD).cache()
 	
-	# Split data so 'training' is used to train the model and 'test' is a subset where the model will be applied
+	# Split data so 'training' is used to train the model 
+	# and 'test' is a subset where the model will be applied
 	(training, test) = ratings.randomSplit([0.8, 0.2])
 		
 	# Build the recommendation model using Alternating Least Squares
@@ -33,11 +33,13 @@ if __name__ == "__main__":
 		coldStartStrategy="drop")
 	model = als.fit(training)
 	
-	# Evaluate the model on training data
+	# Build predictions on 'test' subset of 'ratings'
 	predictions = model.transform(test)
+	
+	# Evaluate the model on training data
 	evaluator = RegressionEvaluator(metricName="rmse", labelCol="rating",
 		predictionCol="prediction")
 	rmse = evaluator.evaluate(predictions)
-	print("Mean Squared Error = " + str(rmse*rmse))
+	print("Mean Squared Error = " + str(rmse))
 	
 	spark.stop()
