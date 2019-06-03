@@ -2,6 +2,7 @@ import numpy
 
 from pyspark import SparkContext
 from pyspark.mllib.recommendation import ALS, Rating
+from pyspark.mllib.evaluation import RegressionMetrics
 
 if __name__ == "__main__":
 	sc = SparkContext(appName="MovieLens-recommender")
@@ -19,9 +20,14 @@ if __name__ == "__main__":
 	# Build the recommendation model using Alternating Least Squares
 	model = ALS.train(ratings, 10, 10)
 	
-	# Evaluate the model on training data
+	# Evaluate the model on training data:
+	# Create tuple (userId, movieId)
 	testdata = ratings.map(lambda p: (p[0], p[1]))
+	# Predict and output tuple ((userId, movieId), prediction)
 	predictions = model.predictAll(testdata).map(lambda r: ((r[0], r[1]), r[2]))
+	# Join prediction to ratings: output tuple ((userId, movieId), (rate, prediction))
 	ratesAndPreds = ratings.map(lambda r: ((r[0], r[1]), r[2])).join(predictions)
-	MSE = ratesAndPreds.map(lambda r: (r[1][0] - r[1][1])**2).mean()
-	print("Mean Squared Error = " + str(MSE))
+	# Evaluate using only tuple (rate, prediction)
+	metrics = RegressionMetrics(ratesAndPreds.map(lambda r: r[1]))
+	rmse = metrics.rootMeanSquaredError
+	print("Root Mean Squared Error = " + str(rmse))
