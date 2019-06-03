@@ -39,3 +39,5 @@ if __name__ == "__main__":
 		predictionCol="prediction")
 	rmse = evaluator.evaluate(predictions)
 	print("Mean Squared Error = " + str(rmse*rmse))
+	
+	spark.stop()
