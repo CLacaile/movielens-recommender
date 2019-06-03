@@ -19,18 +19,19 @@ if __name__ == "__main__":
 	ml_path = "data/ml-latest/ratings.csv"
 	
 	print("Loading data from " + ml_small_path)
-	data = spark.read.text(ml_small_path).rdd
-	data_header = data.take(1)[0]
-	data_filtered = data.filter(lambda l: l!=data_header)
+	dataRDD = spark.read.text(ml_small_path).rdd
+	dataRDD_header = data.take(1)[0]
+	dataRDD_filtered = data.filter(lambda l: l!=data_header)
 	ratingsRDD = data_filtered.map(parseInput)
 	ratings = spark.createDataFrame(ratingsRDD).cache()
 	
+	# Split data so 'training' is used to train the model and 'test' is a subset where the model will be applied
 	(training, test) = ratings.randomSplit([0.8, 0.2])
 		
 	# Build the recommendation model using Alternating Least Squares
 	als = ALS(maxIter=5, regParam=0.01, userCol="userId", itemCol="movieId", ratingCol="rating",
 		coldStartStrategy="drop")
-	model = als.fit(ratings)
+	model = als.fit(training)
 	
 	# Evaluate the model on training data
 	predictions = model.transform(test)
