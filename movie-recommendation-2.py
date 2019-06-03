@@ -29,8 +29,9 @@ if __name__ == "__main__":
 	print("Training the model...")
 	start_train = time.time()
 	# Build the recommendation model using Alternating Least Squares
-	als = ALS(maxIter=5, regParam=0.01, userCol="userId", itemCol="movieId", ratingCol="rating",
-		coldStartStrategy="drop")
+	rank = 10
+	iterations = 10
+	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating")
 	model = als.fit(ratings)
 	end_train = time.time()
 	print("Model trained in " + str(end_train - start_train) + "s!")
