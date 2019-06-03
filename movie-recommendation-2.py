@@ -13,13 +13,14 @@ def parseInput(line):
 if __name__ == "__main__":
 	# Build new session or retrieve existing one
 	print("Creating session...")
-	spark = SparkSession.builder.appName("movielens-recommender-2").getOrCreate()
+	spark = SparkSession.builder\
+		.master("local[*]")
+		.appName("movielens-recommender-2").getOrCreate()
 	
 	ml_small_path = "data/ml-latest-small/ratings.csv"
-	ml_path = "data/ml-latest/ratings.csv"
 	
 	print("Loading data from " + ml_small_path + "...")
-	dataRDD = spark.read.text(ml_small_path).rdd
+	dataRDD = spark.read.text(ml_path).rdd
 	dataRDD_header = dataRDD.take(1)[0]
 	dataRDD_filtered = dataRDD.filter(lambda l: l!=dataRDD_header)
 	ratingsRDD = dataRDD_filtered.map(parseInput)
