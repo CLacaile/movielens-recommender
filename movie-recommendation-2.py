@@ -33,7 +33,7 @@ if __name__ == "__main__":
 	# Build the recommendation model using Alternating Least Squares
 	rank = 10
 	iterations = 10
-	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating")
+	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating", rank=100, regParam=0.01, nonnegative=False)
 	model = als.fit(ratings)
 	end_train = time.time()
 	print("Model trained in " + str(end_train - start_train) + "s!")
