@@ -44,6 +44,10 @@ if __name__ == "__main__":
 	ratesAndPreds = ratingsRDD.map(lambda r: ((r[0], r[1]), r[2])).join(predictions)
 	print("Predictions builded in " + str(end_pred - start_pred) + "s!")
 	
+	# Recommend 3 movies for userId=1
+	user1_recomm = model.recommendProducts(1, 3)
+	print(user1_recomm)
+	
 	# Evaluate using only tuple (rate, prediction)
 	print("Evaluating the model...")
 	metrics = RegressionMetrics(ratesAndPreds.map(lambda t: t[1]))
