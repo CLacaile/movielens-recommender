@@ -53,3 +53,5 @@ if __name__ == "__main__":
 	metrics = RegressionMetrics(ratesAndPreds.map(lambda t: t[1]))
 	rmse = metrics.rootMeanSquaredError
 	print("Root Mean Squared Error = " + str(rmse))
+	
+	spark.stop()
