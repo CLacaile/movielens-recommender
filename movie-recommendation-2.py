@@ -1,4 +1,3 @@
-import numpy
 import time
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
