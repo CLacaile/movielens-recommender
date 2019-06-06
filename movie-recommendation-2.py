@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.recommendation import ALS
 from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.stat import Correlation
 
 def parseInput(line):
 	fields = line.value.split(',')
@@ -55,5 +56,8 @@ if __name__ == "__main__":
 		predictionCol="prediction")
 	rmse = evaluator.evaluate(predictions)
 	print("Root Mean Squared Error = " + str(rmse))
+	
+	#spearman = Correlation.corr(predictions, "prediction", "spearman").head()
+	#print("Spearman correlation matrix:\n", str(spearman[0]))
 	
 	spark.stop()
