@@ -28,27 +28,29 @@ if __name__ == "__main__":
 	ratings = spark.createDataFrame(ratingsRDD).cache()
 	print("Data loaded!")
 	
+	print("Splitting into a training set and a testing set...")
+	(training, testing) = ratings.randomSplit([0.8, 0.2], seed=0L)
+	
 	print("Training the model...")
 	start_train = time.time()
 	# Build the recommendation model using Alternating Least Squares
 	rank = 10
 	iterations = 10
-	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating", rank=50, regParam=0.01, nonnegative=False)
-	model = als.fit(ratings)
+	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating", rank=20, regParam=0.1, nonnegative=True, coldStartStrategy="drop")
+	model = als.fit(training)
 	end_train = time.time()
 	print("Model trained in " + str(end_train - start_train) + "s!")
 	
 	# Build predictions on 'test' subset of 'ratings'
 	print("Building predictions...")
 	start_pred = time.time()
-	predictions = model.transform(ratings)
+	predictions = model.transform(testing)
 	end_pred = time.time()
-	print("Predictions builded in " + str(end_pred - start_pred) + "s!")
+	print("Predictions built in " + str(end_pred - start_pred) + "s!")
 	
 	# Recommend 3 movies for userId=1
-	user1_subset = ratings.where(ratings.userId==1)
-	user1_recomm = model.recommendForUserSubset(user1_subset, 3)
-	print(user1_recomm.take(3))
+	#user1_subset = ratings.where(ratings.userId==1)
+	#user1_recomm = model.recommendForUserSubset(user1_subset, 3)
 	
 	# Evaluate the model on training data
 	print("Evaluating the model...")
