@@ -12,7 +12,7 @@ def parseInput(line):
 
 if __name__ == "__main__":
 	# Build new session or retrieve existing one
-	print("Creating session...")
+	print("-> Creating session...")
 	spark = SparkSession.builder\
 		.master("local[*]")\
 		.appName("movielens-recommender-2")\
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	
 	ml_small_path = "data/ml-latest-small/ratings.csv"
 	
-	print("Loading data from " + ml_small_path + "...")
+	print("-> Loading data from " + ml_small_path + "...")
 	dataRDD = spark.read.text(ml_small_path).rdd
 	dataRDD_header = dataRDD.take(1)[0]
 	dataRDD_filtered = dataRDD.filter(lambda l: l!=dataRDD_header)
@@ -28,23 +28,30 @@ if __name__ == "__main__":
 	ratings = spark.createDataFrame(ratingsRDD).cache()
 	print("Data loaded!")
 	
-	print("Splitting into a training set and a testing set...")
+	print("-> Splitting into a training set and a testing set...")
 	(training, testing) = ratings.randomSplit([0.8, 0.2], seed=0L)
 	
-	print("Training the model...")
+	print("-> Training the model...")
 	start_train = time.time()
 	# Build the recommendation model using Alternating Least Squares
 	rank = 10
 	iterations = 10
-	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating", rank=20, regParam=0.1, nonnegative=True, coldStartStrategy="drop")
+	als = ALS(userCol="userId", itemCol="movieId", ratingCol="rating", rank=20, regParam=0.2, nonnegative=True, coldStartStrategy="drop")
 	model = als.fit(training)
 	end_train = time.time()
 	print("Model trained in " + str(end_train - start_train) + "s!")
 	
 	# Build predictions on 'test' subset of 'ratings'
-	print("Building predictions...")
+	print("-> Building predictions on the testset...")
 	start_pred = time.time()
-	predictions = model.transform(testing)
+	predictions_test = model.transform(testing)
+	end_pred = time.time()
+	print("Predictions built in " + str(end_pred - start_pred) + "s!")
+	
+	# Build predictions on 'train' subset of 'ratings'
+	print("-> Building predictions on the trainset...")
+	start_pred = time.time()
+	predictions_train = model.transform(training)
 	end_pred = time.time()
 	print("Predictions built in " + str(end_pred - start_pred) + "s!")
 	
@@ -52,12 +59,15 @@ if __name__ == "__main__":
 	#user1_subset = ratings.where(ratings.userId==1)
 	#user1_recomm = model.recommendForUserSubset(user1_subset, 3)
 	
-	# Evaluate the model on training data
-	print("Evaluating the model...")
+	# Evaluate the model
+	print("-> Evaluating the model...")
 	evaluator = RegressionEvaluator(metricName="rmse", labelCol="rating",
 		predictionCol="prediction")
-	rmse = evaluator.evaluate(predictions)
-	print("Root Mean Squared Error = " + str(rmse))
+	rmse_test = evaluator.evaluate(predictions_test)
+	print("RMSE testset = " + str(rmse_test))
+	rmse_train = evaluator.evaluate(predictions_train)
+	print("RMSE trainset = " + str(rmse_train))
+	print("Ratio RMSE_test/RMSE_train = " + str(rmse_test/rmse_train))
 	
 	#spearman = Correlation.corr(predictions, "prediction", "spearman").head()
 	#print("Spearman correlation matrix:\n", str(spearman[0]))
